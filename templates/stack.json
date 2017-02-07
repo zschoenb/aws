@@ -192,7 +192,6 @@
           "SecurityGroups" : { "Fn::Join" : [",", [{ "Fn::GetAtt" : [ "securitygroups", "Outputs.Zookeeper"] }, { "Fn::GetAtt" : [ "securitygroups", "Outputs.Default"] }]] },
           "LBSecurityGroups" : { "Fn::GetAtt" : [ "securitygroups", "Outputs.ZookeeperLb"] },
           "HostedZoneName" : { "Fn::GetAtt" : ["vpc", "Outputs.HostedZoneName"] },
-          "DesiredCapacity" : { "Ref" : "ZookeeperEnsembleSize" },
           "InstanceType" : { "Ref" : "ZookeeperEnsembleInstanceType" }
         },
         "TemplateURL" : { "Fn::Join" : ["", ["https://s3.amazonaws.com/", { "Ref" : "S3Bucket" }, "/cloudformation/", { "Ref" : "S3KeyPrefix"}, "/templates/zookeeper.json"]] }

@@ -25,12 +25,12 @@
     },
     "DesiredCapacity": {
       "Type": "Number",
-      "Default" : "3",
+      "Default" : "1",
       "Description": "Number of instances to launch in your ECS cluster"
     },
     "MaxSize": {
       "Type": "Number",
-      "Default" : "6",
+      "Default" : "2",
       "Description": "Maximum number of instances that can be launched in your ECS cluster"
     },
     "InstanceType" : {
@@ -97,12 +97,54 @@
     "ECSCluster": {
       "Type": "AWS::ECS::Cluster"
     },
-    "taskdefinition": {
+    "taskdefinition1": {
       "Type": "AWS::ECS::TaskDefinition",
       "Properties" : {
         "ContainerDefinitions" : [
           {
-            "Name": { "Ref" : "AWS::StackName" },
+            "Name": { "Fn::Join": ["", [{ "Ref" : "AWS::StackName" },"1"]]},
+            "Cpu": "10",
+            "Command": ["-c", "s3", "--s3region", { "Ref" : "AWS::Region" }, "--s3config", { "Fn::Join": [":", [{ "Ref": "S3Bucket"}, { "Ref" : "AWS::StackName" }]]}],
+            "Essential": "true",
+            "Image": { "Ref" : "DockerImage" },
+            "Memory":"400",
+            "PortMappings": [
+              { "HostPort": 2181, "ContainerPort": 2181 },
+              { "HostPort": 2888, "ContainerPort": 2888 },
+              { "HostPort": 3888, "ContainerPort": 3888 },
+              { "HostPort": 8080, "ContainerPort": 8080 }
+            ]
+          }
+        ]
+      }
+    },
+    "taskdefinition2": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties" : {
+        "ContainerDefinitions" : [
+          {
+            "Name": { "Fn::Join": ["", [{ "Ref" : "AWS::StackName" },"2"]]},
+            "Cpu": "10",
+            "Command": ["-c", "s3", "--s3region", { "Ref" : "AWS::Region" }, "--s3config", { "Fn::Join": [":", [{ "Ref": "S3Bucket"}, { "Ref" : "AWS::StackName" }]]}],
+            "Essential": "true",
+            "Image": { "Ref" : "DockerImage" },
+            "Memory":"400",
+            "PortMappings": [
+              { "HostPort": 2181, "ContainerPort": 2181 },
+              { "HostPort": 2888, "ContainerPort": 2888 },
+              { "HostPort": 3888, "ContainerPort": 3888 },
+              { "HostPort": 8080, "ContainerPort": 8080 }
+            ]
+          }
+        ]
+      }
+    },
+    "taskdefinition3": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties" : {
+        "ContainerDefinitions" : [
+          {
+            "Name": { "Fn::Join": ["", [{ "Ref" : "AWS::StackName" },"3"]]},
             "Cpu": "10",
             "Command": ["-c", "s3", "--s3region", { "Ref" : "AWS::Region" }, "--s3config", { "Fn::Join": [":", [{ "Ref": "S3Bucket"}, { "Ref" : "AWS::StackName" }]]}],
             "Essential": "true",
@@ -122,7 +164,7 @@
       "Type": "AWS::S3::Bucket",
       "DeletionPolicy" : "Retain"
     },
-    "EcsElasticLoadBalancer" : {
+    "ZKElasticLoadBalancer1" : {
       "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties" : {
         "Scheme" : "internal",
@@ -153,15 +195,101 @@
         }
       }
     },
-    "ECSRecordSet" : {
+    "ZKElasticLoadBalancer2" : {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+        "Scheme" : "internal",
+        "Subnets" : { "Ref" : "SubnetID" },
+        "CrossZone" : "true",
+        "ConnectionDrainingPolicy": {
+          "Enabled": true
+        },
+        "SecurityGroups" : { "Ref" : "LBSecurityGroups" },
+        "Listeners" : [
+          {
+            "LoadBalancerPort" : "2181",
+            "InstancePort" : "2181",
+            "Protocol" : "TCP"
+          },
+          {
+            "LoadBalancerPort" : "80",
+            "InstancePort" : "8080",
+            "Protocol" : "HTTP"
+          }
+        ],
+        "HealthCheck" : {
+          "Target" : "HTTP:8080/exhibitor/v1/cluster/state",
+          "HealthyThreshold" : "2",
+          "UnhealthyThreshold" : "10",
+          "Interval" : "30",
+          "Timeout" : "5"
+        }
+      }
+    },
+    "ZKElasticLoadBalancer3" : {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+        "Scheme" : "internal",
+        "Subnets" : { "Ref" : "SubnetID" },
+        "CrossZone" : "true",
+        "ConnectionDrainingPolicy": {
+          "Enabled": true
+        },
+        "SecurityGroups" : { "Ref" : "LBSecurityGroups" },
+        "Listeners" : [
+          {
+            "LoadBalancerPort" : "2181",
+            "InstancePort" : "2181",
+            "Protocol" : "TCP"
+          },
+          {
+            "LoadBalancerPort" : "80",
+            "InstancePort" : "8080",
+            "Protocol" : "HTTP"
+          }
+        ],
+        "HealthCheck" : {
+          "Target" : "HTTP:8080/exhibitor/v1/cluster/state",
+          "HealthyThreshold" : "2",
+          "UnhealthyThreshold" : "10",
+          "Interval" : "30",
+          "Timeout" : "5"
+        }
+      }
+    },
+    "ZKRecordSet1" : {
       "Type" : "AWS::Route53::RecordSet",
       "Properties" : {
-        "Name" : { "Fn::Join": [ ".", [ "zookeeper", { "Ref": "HostedZoneName" } ] ] },
+        "Name" : { "Fn::Join": [ ".", [ "zookeeper1", { "Ref": "HostedZoneName" } ] ] },
         "HostedZoneName" : { "Ref" : "HostedZoneName"},
         "Type" : "A",
         "AliasTarget" : {
-            "HostedZoneId" : { "Fn::GetAtt" : ["EcsElasticLoadBalancer", "CanonicalHostedZoneNameID"] },
-            "DNSName" : { "Fn::GetAtt" : ["EcsElasticLoadBalancer","DNSName"] }
+            "HostedZoneId" : { "Fn::GetAtt" : ["ZKElasticLoadBalancer1", "CanonicalHostedZoneNameID"] },
+            "DNSName" : { "Fn::GetAtt" : ["ZKElasticLoadBalancer1","DNSName"] }
+        }
+      }
+    },
+    "ZKRecordSet2" : {
+      "Type" : "AWS::Route53::RecordSet",
+      "Properties" : {
+        "Name" : { "Fn::Join": [ ".", [ "zookeeper2", { "Ref": "HostedZoneName" } ] ] },
+        "HostedZoneName" : { "Ref" : "HostedZoneName"},
+        "Type" : "A",
+        "AliasTarget" : {
+            "HostedZoneId" : { "Fn::GetAtt" : ["ZKElasticLoadBalancer2", "CanonicalHostedZoneNameID"] },
+            "DNSName" : { "Fn::GetAtt" : ["ZKElasticLoadBalancer2","DNSName"] }
+        }
+      }
+    },
+    "ZKRecordSet3" : {
+      "Type" : "AWS::Route53::RecordSet",
+      "Properties" : {
+        "Name" : { "Fn::Join": [ ".", [ "zookeeper3", { "Ref": "HostedZoneName" } ] ] },
+        "HostedZoneName" : { "Ref" : "HostedZoneName"},
+        "Type" : "A",
+        "AliasTarget" : {
+            "HostedZoneId" : { "Fn::GetAtt" : ["ZKElasticLoadBalancer3", "CanonicalHostedZoneNameID"] },
+            "DNSName" : { "Fn::GetAtt" : ["ZKElasticLoadBalancer3","DNSName"] }
         }
       }
     },
@@ -192,7 +320,7 @@
       },
       "UpdatePolicy": {
         "AutoScalingRollingUpdate": {
-          "MinInstancesInService": "2",
+          "MinInstancesInService": "1",
           "MaxBatchSize": "1",
           "PauseTime" : "PT10M",
           "WaitOnResourceSignals": "true"
@@ -267,7 +395,7 @@
         ]]}}
       }
     },
-    "service": {
+    "zkservice1": {
       "Type": "AWS::ECS::Service",
       "DependsOn": ["ECSAutoScalingGroup"],
       "Properties" : {
@@ -277,11 +405,45 @@
           {
             "ContainerName": { "Ref" : "AWS::StackName" },
             "ContainerPort": "2181",
-            "LoadBalancerName" : { "Ref" : "EcsElasticLoadBalancer" }
+            "LoadBalancerName" : { "Ref" : "ZKElasticLoadBalancer1" }
           }
         ],
         "Role" : {"Ref":"ECSServiceRole"},
-        "TaskDefinition" : {"Ref":"taskdefinition"}
+        "TaskDefinition" : {"Ref":"taskdefinition1"}
+      }
+    },
+    "zkservice2": {
+      "Type": "AWS::ECS::Service",
+      "DependsOn": ["ECSAutoScalingGroup"],
+      "Properties" : {
+        "Cluster": {"Ref": "ECSCluster"},
+        "DesiredCount": { "Ref" : "DesiredCapacity" },
+        "LoadBalancers": [
+          {
+            "ContainerName": { "Ref" : "AWS::StackName" },
+            "ContainerPort": "2181",
+            "LoadBalancerName" : { "Ref" : "ZKElasticLoadBalancer2" }
+          }
+        ],
+        "Role" : {"Ref":"ECSServiceRole"},
+        "TaskDefinition" : {"Ref":"taskdefinition2"}
+      }
+    },
+    "zkservice3": {
+      "Type": "AWS::ECS::Service",
+      "DependsOn": ["ECSAutoScalingGroup"],
+      "Properties" : {
+        "Cluster": {"Ref": "ECSCluster"},
+        "DesiredCount": { "Ref" : "DesiredCapacity" },
+        "LoadBalancers": [
+          {
+            "ContainerName": { "Ref" : "AWS::StackName" },
+            "ContainerPort": "2181",
+            "LoadBalancerName" : { "Ref" : "ZKElasticLoadBalancer3" }
+          }
+        ],
+        "Role" : {"Ref":"ECSServiceRole"},
+        "TaskDefinition" : {"Ref":"taskdefinition3"}
       }
     },
     "ECSServiceRole": {
@@ -371,12 +533,16 @@
   },
 
   "Outputs" : {
-    "EndpointAddress" : {
+    "EndpointAddresses" : {
       "Value": {
          "Fn::Join": [
            "",
            [
-             { "Ref" : "ECSRecordSet" },
+             { "Ref" : "ZKRecordSet1" },
+            ":2181",
+             { "Ref" : "ZKRecordSet2" },
+            ":2181",
+             { "Ref" : "ZKRecordSet3" },
             ":2181"
            ]
          ]
@@ -388,7 +554,7 @@
            "",
            [
             "http://",
-             { "Ref" : "ECSRecordSet" },
+             { "Ref" : "ZKRecordSet1" },
             "/exhibitor/v1/ui/index.html"
            ]
          ]
