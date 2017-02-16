@@ -247,12 +247,7 @@
           {
             "Namespace": "aws:elasticbeanstalk:command",
             "OptionName": "DeploymentPolicy",
-            "Value": "RollingWithAdditionalBatch"
-          },
-          {
-            "Namespace": "aws:elasticbeanstalk:command",
-            "OptionName": "BatchSize",
-            "Value": "33"
+            "Value": "Immutable"
           },
           {
             "Namespace": "aws:autoscaling:updatepolicy:rollingupdate",
@@ -468,6 +463,11 @@
             "Namespace": "aws:elasticbeanstalk:application:environment",
             "OptionName": "HONEYBADGER_API_KEY",
             "Value": { "Ref" : "HoneybadgerApiKey"}
+          },
+          {
+            "Namespace": "aws:elasticbeanstalk:application:environment",
+            "OptionName": "LOGZIO_KEY",
+            "Value": { "Ref" : "LogzioKey"}
           },
           { "Fn::If": [
             "HasSSLCertificate",
