@@ -1,7 +1,7 @@
 [
   {
     "ParameterKey": "KeyName",
-    "ParameterValue": "hybox"
+    "ParameterValue": "zachTest"
   },
   {
     "ParameterKey": "S3Bucket",
@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "PublicZoneName",
-    "ParameterValue": "hydrainabox.org."
+    "ParameterValue": "172.31.13.113"
   },
   {
     "ParameterKey": "SecretKeyBase",
